@@ -16,71 +16,73 @@ const text = (() => {
 
     inputArea = _form.querySelector('.form__input');
 
-    const tasksArray = items.getElementsByTagName("li");
-    
-    for(let i = 0; i < tasksArray.length; i++) {
-      const item = tasksArray[i].children[2].parentNode;
-      tasksArray[i].children[0].addEventListener('click', () => {
-        finish(tasksArray[i]);
-      });
-      tasksArray[i].children[1].addEventListener('click', () => {
-        edit(tasksArray[i].children[1]);
-      });
-      tasksArray[i].children[2].addEventListener('click', () => {
-        deleteItem(item);
-      });
+    for(let i = 0; i < items.children.length; i++) {
+      items.children[i].children[0].addEventListener('click', finish);
+      items.children[i].children[1].addEventListener('click', edit);
+      items.children[i].children[1].addEventListener('keypress', commit);
+      items.children[i].children[2].addEventListener('click', deleteItem);
     }
-    // TODO láta hluti í _items virka
   }
 
   function formHandler(e) {
     e.preventDefault();
-    console.log('jello');
-    add(inputArea.value);
+    add(e.target.children[0].value);
+    e.target.children[0].value = '';
   }
 
   // event handler fyrir það að klára færslu
   function finish(e) {
-    e.classList.toggle('item--done');
+    e.target.parentElement.classList.toggle('item--done');
   }
 
   // event handler fyrir það að breyta færslu 
   function edit(e) {
+    let input = document.createElement('input');
+    input.addEventListener('keypress', commit);
+    input.classList.add('item__text');
+    input.classList.add('item__edit');
+    input.type = 'text';
+    input.value = e.target.innerText;
+    e.target.parentElement.insertBefore(input, e.target.nextSibling);
+    input.focus();
+    e.target.remove();
   }
 
   // event handler fyrir það að klára að breyta færslu
   function commit(e) {
+    if(e.keyCode === ENTER_KEYCODE) {
+      let text = el('span', 'item__text', edit);
+      text.textContent = e.target.value;
+      e.target.parentElement.insertBefore(text, e.target.nextSibling);
+      e.target.remove();
+    }
   }
 
   // fall sem sér um að bæta við nýju item
   function add(value) {
-    if(inputArea !== null) {
-      const listItem = el('li','item', null);
-      const checkBox = el('input', 'item__checkbox', () => {
-        finish(listItem);
-      });
-      checkBox.setAttribute('type', 'checkbox');
-      const span = el('span', 'item__text', () => {
-        edit(listItem);
-      });
+    if(/\S/.test(value)) {
+      const listItem = document.createElement('li');
+      listItem.classList.add('item');
+      const checkBox = el('input', 'item__checkbox', finish);
+      checkBox.type = 'checkbox';
+
+      const span = el('span', 'item__text', edit);
       span.appendChild(document.createTextNode(value));
-      const button = el('button', 'item__button', () => {
-        deleteItem(listItem);
-      });
+
+      const button = el('button', 'item__button', deleteItem);
       button.appendChild(document.createTextNode('Eyða'));
+
       listItem.appendChild(checkBox);
       listItem.appendChild(span);
       listItem.appendChild(button);
 
-      items.appendChild(listItem);
-
-      input.value('');
+      items.appendChild(listItem);  
     }
   }
 
   // event handler til að eyða færslu
   function deleteItem(e) {
-    e.remove();
+    e.target.parentElement.remove();
   }
 
   // hjálparfall til að útbúa element
